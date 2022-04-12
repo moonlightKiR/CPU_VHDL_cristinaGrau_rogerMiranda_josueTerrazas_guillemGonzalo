@@ -1,0 +1,4 @@
+# ModelSim files
+*.mpf
+transcript
+work/*
