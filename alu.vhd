@@ -58,15 +58,16 @@ begin
 					result_unsigned := zero; -- realment no caldria, ja que és el valor per defecte
 				end if;
 			when "1010" =>
-				result_unsigned := shift_left(oper_1_unsigned, oper_2_unsigned); 	-- <<
+				result_unsigned := shift_left(oper_1_unsigned, to_integer(oper_2_unsigned));  -- <<
 			when "1011" =>
-				result_unsigned := shift_right(oper_1_unsigned, oper_2_unsigned); 	-- >>
+				result_unsigned := shift_right(oper_1_unsigned, to_integer(oper_2_unsigned)); -- >>
 			when "1100" =>
 				pc_out_unsigned := oper_1_unsigned;						-- jump
 			when "1101" =>
 				if oper_2_unsigned = zero then
 					pc_out_unsigned := oper_1_unsigned;					-- conditional jump
 				end if;
+			when others =>
 		end case;
 		
 		pc_out <= std_logic_vector(pc_out_unsigned);
