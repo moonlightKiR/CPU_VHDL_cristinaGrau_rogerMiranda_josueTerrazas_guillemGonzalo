@@ -19,7 +19,7 @@ end entity;
 
 architecture behavioral of alu is
 begin
-	process(opcode)
+	process(opcode, oper_1, oper_2, pc_in)
 		variable pc_out_unsigned : unsigned(PROGRAM_COUNTER_BUS - 1 downto 0);
 		variable oper_1_unsigned, oper_2_unsigned, result_unsigned : unsigned(REGISTER_DATA_BUS - 1 downto 0);
 		
