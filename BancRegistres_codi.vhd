@@ -19,7 +19,9 @@ begin
 	identifier : process (reset, clock)
 	begin
 		if (reset = '0') then
-			Registro <= (others => '0');
+			for i in Registro'range loop
+				Registro(i) <= (others => '0');
+			end loop;
 		end if;
 		if (rising_edge(clock)) then
 			if (readwrite = '1' and Address /= "0000") then
