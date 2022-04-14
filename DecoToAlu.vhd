@@ -155,6 +155,8 @@ begin
 	
 	process (clk)
 	begin
-		state <= next_state;
+		if (rising_edge(clk)) then
+			state <= next_state;
+		end if;
 	end process;
 end behavioral;
