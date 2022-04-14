@@ -99,13 +99,13 @@ begin
 				when e1 =>
 					reg_nread_write <= '0';
 					reg_address <= rt(3 downto 0);
-					oper_2 <= reg_valueOut;
-					next_state <= e10;
+					next_state <= e2;
 					
 				when e2 =>
 					reg_nread_write <= '0';
 					reg_address <= rt(3 downto 0);
-					next_state <= e2;
+					oper_2 <= reg_valueOut;
+					next_state <= e10;
 				
 				when e5 =>
 					oper_2 <= "00000000" & const;

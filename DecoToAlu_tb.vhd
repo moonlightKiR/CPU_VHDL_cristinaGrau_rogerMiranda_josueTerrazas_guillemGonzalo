@@ -89,7 +89,7 @@ architecture behavioral of deco_to_alu_tb is
 	signal const : std_logic_vector(CONSTANT_BUS - 1 downto 0);					-- change
 	signal reg_valueOut, reg_valueIn : std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 	signal reg_address : std_logic_vector(3 downto 0);
-	signal nread_write, reg_nread_write, reset : std_logic;
+	signal reg_nread_write, reset : std_logic;
 	
 	constant MAX_DELAY : time := 20*CLK_PERIOD; -- en el pitjor dels casos hi han 10 estats
 begin
@@ -112,7 +112,7 @@ begin
 			Address => reg_address,
 			reset => reset,
 			clock => clk,
-			readwrite => nread_write
+			readwrite => reg_nread_write
 		);
 		
 	UUT_deco_alu : deco_to_alu
@@ -142,10 +142,7 @@ begin
 	begin
 		-- reset
 		reset <= '0';
-		nread_write <= '1';
 		wait for CLK_PERIOD*2;
-		nread_write <= reg_nread_write;
-		wait for 1ns;
 		reset <= '1';
 		
 		pc_in <= x"00000000";
@@ -155,12 +152,15 @@ begin
 		rs <= "000001";
 		const <= x"01";
 		wait for MAX_DELAY;
-		assert ((pc_in = x"00000001") and (result = x"0001")) -- es suma 0 i 1 => resultat és 1 i PC incrementat en 1
+		assert ((pc_out = x"00000001") and (result = x"0001")) -- es suma 0 i 1 => resultat és 1 i PC incrementat en 1
 			report "test failed for test 01 [addi]" severity error;
+		wait for 1ns;
 		
 		opcode <= "0110"; -- not
 		rd <= "000001";
 		rs <= "000000";
+		assert ((pc_out = x"00000001") and (result = x"FFFE")) -- es nega 1 => resultat és 0xFFFE i PC incrementat en 1
+			report "test failed for test 02 [not]" severity error;
 		wait;
 	end process;
 end behavioral;
