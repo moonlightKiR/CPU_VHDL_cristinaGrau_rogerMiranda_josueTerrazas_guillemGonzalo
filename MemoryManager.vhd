@@ -1,0 +1,156 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
+use work.bus_multiplexer_pkg.all;
+
+entity memory_manager is
+	generic (
+		MEMORY_ACCESSES				: integer := 2; -- nº d'accessos a la RAM
+		
+		RAM_ADDRESS_BUS				: integer := 32;
+		RAM_DATA_BUS				: integer := 32
+	);
+	port (
+		-- pins bloc
+		clk 			: in std_logic;
+		
+		-- pins memoria
+		w_addr			: out std_logic_vector(RAM_ADDRESS_BUS - 1 downto 0);
+		w_addr_valid	: out std_logic;
+		w_data			: out std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+		w_data_valid	: out std_logic;
+		w_resp			: in std_logic_vector(1 downto 0);
+		w_resp_valid	: in std_logic;
+		
+		r_addr			: out std_logic_vector(RAM_ADDRESS_BUS - 1 downto 0);
+		r_addr_valid	: out std_logic;
+		r_data			: in std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+		r_data_valid	: in std_logic;
+		r_resp			: in std_logic_vector(1 downto 0);
+		
+		-- pins acces memoria
+		nread_write		: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
+		addr			: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
+		write_data		: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
+		read_data		: out bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
+		response		: out bus_array(MEMORY_ACCESSES - 1 downto 0)(1 downto 0);
+		done			: out std_logic_vector(MEMORY_ACCESSES - 1 downto 0)
+	);
+end entity;
+
+architecture behavioral of memory_manager is
+	TYPE MEMORY_MANAGER_STATE_MACHINE IS (
+		s0, 			-- changes? read/write?
+		s1, s2, s3, 	-- write
+		s10, s11, s12,	-- read
+		s20, s21, s22		-- increment check
+	);
+	
+	constant ACESSOR_BUS 		: integer := integer(ceil(log2(real(MEMORY_ACCESSES))));
+	signal state, next_state 	: MEMORY_MANAGER_STATE_MACHINE := s0;
+	signal accessor				: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	
+	-- variables to check if we need to recheck the RAM
+	signal last_addr_writted	: std_logic_vector(MEMORY_ACCESSES - 1 downto 0) := (others => '1');
+	signal last_nread_write		: std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
+	signal last_addr			: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
+	signal last_write_data		: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
+begin
+	process (clk) -- TODO
+	begin
+		case state is
+				when s0 =>
+					if nread_write(accessor) /= last_nread_write(accessor)
+						or addr(accessor) /= last_addr(accessor)
+						or write_data(accessor) /= last_write_data(accessor)
+						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1') then -- some other state has writted the same address, and you were reading it
+						-- there's changes
+						if nread_write(accessor) = '0' then
+							next_state <= s1; -- read
+						else
+							next_state <= s10; -- write
+						end if;
+					else
+						next_state <= s22; -- the value that you'll get it's the same; skip
+					end if;
+					
+				when s1 =>
+					done(accessor) <= '0';
+					w_addr <= addr(accessor);
+					w_data <= write_data(accessor);
+					
+					next_state <= s2;
+					
+				when s2 =>
+					w_addr <= addr(accessor);
+					w_data <= write_data(accessor);
+					w_addr_valid <= '1';
+					w_data_valid <= '1';
+					
+					if w_resp_valid then
+						next_state <= s3;
+					end if;
+					
+				when s3 =>
+					response(accessor) <= w_resp;
+					w_addr_valid <= '0';
+					w_data_valid <= '0';
+					last_write_data(accessor) <= write_data(accessor);
+					
+					-- update last_addr_written
+					-- TODO
+					
+					next_state <= s20;
+					
+				when s10 =>
+					done(accessor) <= '0';
+					r_addr <= addr(accessor);
+					
+					next_state <= s11;
+					
+				when s11 =>
+					r_addr <= addr(accessor);
+					r_addr_valid <= '1';
+					
+					if r_data_valid then
+						next_state <= s12;
+					end if;
+					
+				when s12 =>
+					response(accessor) <= r_resp;
+					read_data(accessor) <= r_data;
+					r_addr_valid <= '0';
+					
+					next_state <= s20;
+					
+				when s20 =>
+					last_addr_writted(accessor) <= '0';
+					last_nread_write(accessor) <= nread_write(accessor);
+					last_addr(accessor) <= addr(accessor);
+					
+					next_state <= s21;
+				
+				when s21 =>
+					done <= '1';
+					
+					next_state <= s22;
+				
+				when s22 =>
+					-- check the next access
+					accessor <= accessor+1;
+					if accessor >= MEMORY_ACCESSES then
+						accessor <= (others <= '0'); -- last one => start again
+					end if;
+					
+					next_state <= s0;
+		end case;
+	end process;
+	
+	process (clk)
+	begin
+		if (rising_edge(clk)) then
+			state <= next_state;
+		end if;
+	end process;
+end behavioral;
