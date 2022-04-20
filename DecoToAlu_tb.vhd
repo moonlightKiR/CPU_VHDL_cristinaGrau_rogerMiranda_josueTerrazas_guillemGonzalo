@@ -35,6 +35,7 @@ architecture behavioral of deco_to_alu_tb is
 			-- pins alu
 			opcode_o		: out std_logic_vector(3 downto 0);
 			oper_1, oper_2 	: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
+			oper			: out std_logic;
 			alu_pc_in		: out std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0); -- POV Alu
 			
 			alu_pc_out		: in std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0); -- POV Alu
@@ -61,6 +62,7 @@ architecture behavioral of deco_to_alu_tb is
 			opcode			: in std_logic_vector(3 downto 0);
 			oper_1, oper_2 	: in std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);		-- rs&rt, o rs&k, o rs&-
 			pc_in			: in std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0);
+			oper, clk		: in std_logic;
 			
 			pc_out			: out std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0);
 			result 			: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0)		-- rd
@@ -79,7 +81,7 @@ architecture behavioral of deco_to_alu_tb is
 	signal clk : std_logic := '0';
 	constant CLK_PERIOD : time := 1ns;
 	
-	signal done : std_logic;													-- done?
+	signal done, oper : std_logic;													-- done?
 	signal opcode, alu_opcode : std_logic_vector(3 downto 0);					-- change
 	signal oper_1, oper_2 : std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 	signal pc_in, pc_out : std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0);
@@ -99,6 +101,8 @@ begin
 			oper_1 => oper_1,
 			oper_2 => oper_2,
 			pc_in => alu_pc_in,
+			oper => oper,
+			clk => clk,
 			pc_out => alu_pc_out,
 			result => result
 		);
@@ -127,6 +131,7 @@ begin
 			opcode_o => alu_opcode,
 			oper_1 => oper_1,
 			oper_2 => oper_2,
+			oper => oper,
 			alu_pc_in => alu_pc_in,
 			alu_pc_out => alu_pc_out,
 			result => result,

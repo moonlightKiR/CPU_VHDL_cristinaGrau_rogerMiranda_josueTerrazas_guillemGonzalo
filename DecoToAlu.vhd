@@ -25,6 +25,7 @@ entity deco_to_alu is
 		-- pins alu
 		opcode_o		: out std_logic_vector(3 downto 0);
 		oper_1, oper_2 	: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
+		oper			: out std_logic;
 		alu_pc_in		: out std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0); -- POV Alu
 		
 		alu_pc_out		: in std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0); -- POV Alu
@@ -44,7 +45,7 @@ end entity;
 
 architecture behavioral of deco_to_alu is
 	TYPE DECO_TO_ALU_STATE_MACHINE IS (
-		e0, e1, e2, e5, e10, e11, e15, e16, e17, e20, e25
+		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25
 	);
 	
 	signal is_jump : boolean;
@@ -120,6 +121,12 @@ begin
 					reg_nread_write <= '0';
 					reg_address <= internal_rs(3 downto 0);
 					oper_1 <= reg_valueOut;
+					oper <= '0';
+					
+					next_state <= e12;
+					
+				when e12 =>
+					oper <= '1';
 					
 					if is_jump then
 						next_state <= e20;
@@ -147,6 +154,7 @@ begin
 				
 				when e20 =>
 					done <= '1';
+					oper <= '0';
 				
 				when others => -- ?
 			end case;
