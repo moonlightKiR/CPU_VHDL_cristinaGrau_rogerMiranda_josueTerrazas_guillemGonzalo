@@ -107,9 +107,8 @@ begin
 					for i in 0 to MEMORY_ACCESSES - 1 loop
 						if enable(i) = '1' and i /= accessor 										-- ha de ser un altre entrada, estar activada...
 								and nread_write(i) = '0' and last_addr(i) = addr(accessor) then		-- ... i llegir de la mateixa adre?a
-							last_addr_writted(i) = '1';
+							last_addr_writted(i) <= '1';
 						end if;
-						Registro(i) <= (others => '0');
 					end loop;
 					
 					next_state <= s20;
