@@ -49,7 +49,8 @@ architecture behavioral of memory_manager is
 	
 	constant ACESSOR_BUS 		: integer := integer(ceil(log2(real(MEMORY_ACCESSES))));
 	signal state, next_state 	: MEMORY_MANAGER_STATE_MACHINE := s0;
-	signal accessor				: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	signal u_accessor			: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	signal accessor				: integer;
 	
 	-- variables to check if we need to recheck the RAM
 	signal last_addr_writted	: std_logic_vector(MEMORY_ACCESSES - 1 downto 0) := (others => '1');
@@ -57,7 +58,9 @@ architecture behavioral of memory_manager is
 	signal last_addr			: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
 	signal last_write_data		: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
 begin
-	process (clk) -- TODO
+	accessor <= to_integer(u_accessor);
+	
+	process (clk) -- TODO clk only?
 	begin
 		case state is
 				when s0 =>
@@ -132,15 +135,15 @@ begin
 					next_state <= s21;
 				
 				when s21 =>
-					done <= '1';
+					done(accessor) <= '1';
 					
 					next_state <= s22;
 				
 				when s22 =>
 					-- check the next access
-					accessor <= accessor+1;
-					if accessor >= MEMORY_ACCESSES then
-						accessor <= (others <= '0'); -- last one => start again
+					u_accessor <= u_accessor+1;
+					if to_integer(u_accessor) = MEMORY_ACCESSES then
+						u_accessor <= (others => '0'); -- last one => start again
 					end if;
 					
 					next_state <= s0;
