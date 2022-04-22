@@ -30,6 +30,7 @@ entity memory_manager is
 		r_resp			: in std_logic_vector(1 downto 0);
 		
 		-- pins acces memoria
+		enable			: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 		nread_write		: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 		addr			: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
 		write_data		: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
@@ -64,15 +65,16 @@ begin
 	begin
 		case state is
 				when s0 =>
-					if nread_write(accessor) /= last_nread_write(accessor)
+					if enable(accessor) = '1'
+						and (nread_write(accessor) /= last_nread_write(accessor)
 						or addr(accessor) /= last_addr(accessor)
 						or write_data(accessor) /= last_write_data(accessor)
-						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1') then -- some other state has writted the same address, and you were reading it
+						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1')) then -- some other state has writted the same address, and you were reading it
 						-- there's changes
 						if nread_write(accessor) = '0' then
-							next_state <= s1; -- read
+							next_state <= s1; -- write
 						else
-							next_state <= s10; -- write
+							next_state <= s10; -- read
 						end if;
 					else
 						next_state <= s22; -- the value that you'll get it's the same; skip
@@ -102,7 +104,13 @@ begin
 					last_write_data(accessor) <= write_data(accessor);
 					
 					-- update last_addr_written
-					-- TODO
+					for i in 0 to MEMORY_ACCESSES - 1 loop
+						if enable(i) = '1' and i /= accessor 										-- ha de ser un altre entrada, estar activada...
+								and nread_write(i) = '0' and last_addr(i) = addr(accessor) then		-- ... i llegir de la mateixa adre?a
+							last_addr_writted(i) = '1';
+						end if;
+						Registro(i) <= (others => '0');
+					end loop;
 					
 					next_state <= s20;
 					
