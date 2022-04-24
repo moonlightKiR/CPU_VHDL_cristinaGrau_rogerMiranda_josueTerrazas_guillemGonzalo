@@ -26,8 +26,10 @@ end entity;
 architecture ararc_memory of memory is
     type state_type_write is (SW0, SW1, SW2, SW3);
     signal current_state_write, next_state_write : state_type_write;
+	
     type state_type_read is (SR0, SR1, SR2, SR3);
     signal current_state_read, next_state_read : state_type_read;
+	
     type memory_type is array (0 to 63) of std_logic_vector(31 downto 0);
     signal memory_system : memory_type;
     
@@ -35,7 +37,7 @@ architecture ararc_memory of memory is
 
     clock_p : process (clock, reset)
     begin
-        if (reset = '0') then
+        if (reset = '1') then
             current_state_write <= SW0;
             current_state_read <= SR0;
         elsif (clock'event and clock = '1') then
@@ -43,22 +45,26 @@ architecture ararc_memory of memory is
             current_state_read <= next_state_read;
         end if; 
     end process;
-    write_process : process (current_state_write)
+	
+    write_process : process (current_state_write, WAVALID, WDATAV)
     begin
         case( current_state_write ) is
             when SW0 =>
-
-                if WAVALID = '1'  and WDATAV = '1' then
-                    next_state_write <= SW1;
-		else
-		    next_state_write <= SW0;
-                end if ;
+                WRESPV <= '0';
                 WRESP <= "00";
+				
+                if WAVALID = '1' and WDATAV = '1' then
+                    next_state_write <= SW1;
+                else
+		            next_state_write <= SW0;
+                end if;
             when SW1 => -- aqui miro si hay error de @
                 
                 if WADDR >= "00000000000000000000000001000000" then
                     WRESP <= "01";
-                    next_state_write <= SW0;
+					if WAVALID = '0' and WDATAV = '0' then
+						next_state_write <= SW0;
+					end if;
                 else 
                     -- Aqui meter el dato en la RAM
                     memory_system(to_integer(unsigned(WADDR))) <= WDATA;
@@ -66,37 +72,39 @@ architecture ararc_memory of memory is
                     next_state_write <= SW2;
                 end if;
 
-            when SW2 => 
-                
+            when SW2 =>
                 WRESP <= "00";
                 WRESPV <= '1';
-                next_state_write <= SW3;
-                
-            when SW3 =>
-                
-                WRESPV <= '0';
-                next_state_write <= SW3;
+				
+                if WAVALID = '0' and WDATAV = '0' then
+                    next_state_write <= SW0;
+                end if;
                 
             when others =>
                 
         end case;
     end process;
-    read_process : process ( current_state_read )
+	
+    read_process : process ( current_state_read, RAVALID )
     begin
         case( current_state_read ) is
         
             when SR0 =>
-
-                if RAVALID = '1' then
+                RDATAV <= '0';
+				RRESP <= "00";
+                
+				if RAVALID = '1' then
                     next_state_read <= SR1;
                 else
-		    next_state_read <= SR0;
-		end if;
+		            next_state_read <= SR0;
+		        end if;
                 
             when SR1 =>
                 if RADDR >= "00000000000000000000000001000000" then
                     RRESP <= "01";
-                    next_state_read <= SR0;
+					if RAVALID = '0' then
+						next_state_read <= SR0;
+					end if;
                 else   
                     -- Aqui meter el dato en la RAM
                     RDATA <= memory_system(to_integer(unsigned(RADDR)));
@@ -105,14 +113,15 @@ architecture ararc_memory of memory is
                 end if;
 
             when SR2 =>
+				RRESP <= "00";
                 RDATAV <= '1';
-                next_state_read <= SR3;
-            when SR3 =>
-                RDATAV <= '0';
-                next_state_read <= SR0;
+				
+				if RAVALID = '0' then
+					next_state_read <= SR0;
+				end if;
             
             when others =>
         
-        end case ;
+        end case;
     end process;
 end ararc_memory;

@@ -43,7 +43,7 @@ architecture bench of memory_tb is
     signal clock    : std_logic := '0';
     signal reset    : std_logic;
 	
-	constant CLK_PERIOD : time := 10ns;
+	constant CLK_PERIOD : time := 10 ns;
 
     begin
         memory_inst : memory
@@ -70,8 +70,16 @@ architecture bench of memory_tb is
         
         stims_process: process
         begin
+			-- Prepare
+            reset <= '0';
+			WDATAV <= '0';
+			WAVALID <= '0';
+			RAVALID <= '0';
+			
+			-- Reset
+            wait for 1 ns;
             reset <= '1';
-            wait for 10 ns;
+            wait for 9 ns;
             reset <= '0';
             
             -- Write
@@ -79,26 +87,45 @@ architecture bench of memory_tb is
             
                 WADDR <= std_logic_vector(to_unsigned(i,32));
                 WDATA <= std_logic_vector(to_unsigned(i+1,32));
-                wait for 100 ns;
+                wait for 99 ns;
                 WDATAV <= '1';
                 WAVALID <= '1';
                 wait for 100 ns;
                 WDATAV <= '0';
                 WAVALID <= '0';
+                wait for 1 ns;
             
             end loop;
+			
+			-- Invalid write
+			WADDR <= x"00110000";
+			wait for 99 ns;
+			WDATAV <= '1';
+			WAVALID <= '1';
+			wait for 100 ns;
+			WDATAV <= '0';
+			WAVALID <= '0';
+			wait for 1 ns;
 
             -- Read
             for i in 0 to 4 loop
             
                 RADDR <= std_logic_vector(to_unsigned(i,32));
-                RDATA <= std_logic_vector(to_unsigned(i+1,32));
-                wait for 100 ns;
+                wait for 99 ns;
                 RAVALID <= '1';
                 wait for 100 ns;
-                WAVALID <= '0';
+                RAVALID <= '0';
+				wait for 1 ns;
             
             end loop;
+			
+			-- Invalid read
+			RADDR <= x"00110000";
+			wait for 99 ns;
+			RAVALID <= '1';
+			wait for 100 ns;
+			RAVALID <= '0';
+			wait for 1 ns;
 			
 			wait;
             
