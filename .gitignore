@@ -1,0 +1,10 @@
+# ModelSim files
+*.mpf
+transcript
+work/*
+vsim.wlf
+*.cr.mti
+wave.do
+
+# Notepad++ files
+*.bak

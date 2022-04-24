@@ -40,8 +40,10 @@ architecture bench of memory_tb is
     signal RDATAV   : std_logic;
     signal RRESP    : std_logic_vector(1 downto 0);
 
-    signal clock    : std_logic;
+    signal clock    : std_logic := '0';
     signal reset    : std_logic;
+	
+	constant CLK_PERIOD : time := 10ns;
 
     begin
         memory_inst : memory
@@ -64,7 +66,7 @@ architecture bench of memory_tb is
                 reset => reset
             );
 
-            clock <= not clock after 10 ns;
+        clock <= not clock after CLK_PERIOD/2;
         
         stims_process: process
         begin
@@ -97,6 +99,8 @@ architecture bench of memory_tb is
                 WAVALID <= '0';
             
             end loop;
+			
+			wait;
             
         end process;
 end;
