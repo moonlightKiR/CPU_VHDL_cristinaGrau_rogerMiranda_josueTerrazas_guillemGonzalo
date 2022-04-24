@@ -6,7 +6,7 @@ use work.bus_multiplexer_pkg.all;
 
 entity memory_manager is
 	generic (
-		MEMORY_ACCESSES				: integer := 2; -- nº d'accessos a la RAM
+		MEMORY_ACCESSES				: integer := 3; -- nº d'accessos a la RAM
 		
 		RAM_ADDRESS_BUS				: integer := 32;
 		RAM_DATA_BUS				: integer := 32
@@ -42,36 +42,45 @@ end entity;
 
 architecture behavioral of memory_manager is
 	TYPE MEMORY_MANAGER_STATE_MACHINE IS (
-		s0, 			-- changes? read/write?
+		ss, s0, 		-- changes? read/write?
 		s1, s2, s3, 	-- write
 		s10, s11, s12,	-- read
-		s20, s21, s22		-- increment check
+		s20, s21, s22	-- increment check
 	);
 	
 	constant ACESSOR_BUS 		: integer := integer(ceil(log2(real(MEMORY_ACCESSES))));
-	signal state, next_state 	: MEMORY_MANAGER_STATE_MACHINE := s0;
-	signal u_accessor			: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	signal state, next_state 	: MEMORY_MANAGER_STATE_MACHINE := ss;
+	signal u_accessor			: unsigned(ACESSOR_BUS - 1 downto 0);
 	signal accessor				: integer;
 	
 	-- variables to check if we need to recheck the RAM
-	signal last_addr_writted	: std_logic_vector(MEMORY_ACCESSES - 1 downto 0) := (others => '1');
+	signal first_check			: std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
+	signal last_addr_writted	: std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 	signal last_nread_write		: std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 	signal last_addr			: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
 	signal last_write_data		: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
 begin
 	accessor <= to_integer(u_accessor);
 	
-	process (clk) -- TODO clk only?
+	process (state, clk)
+		variable next_u_accessor : unsigned(ACESSOR_BUS - 1 downto 0);
 	begin
 		case state is
+				when ss =>
+					u_accessor <= to_unsigned(0, ACESSOR_BUS);
+					first_check <= (others => '1');
+					
+					next_state <= s0;
+					
 				when s0 =>
 					if enable(accessor) = '1'
-						and (nread_write(accessor) /= last_nread_write(accessor)
-						or addr(accessor) /= last_addr(accessor)
-						or write_data(accessor) /= last_write_data(accessor)
-						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1')) then -- some other state has writted the same address, and you were reading it
+						and (first_check(accessor) = '1'
+							or nread_write(accessor) /= last_nread_write(accessor)
+							or addr(accessor) /= last_addr(accessor)
+							or (nread_write(accessor) = '1' and write_data(accessor) /= last_write_data(accessor))	-- you've updated the previous setted value
+							or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1')) then			-- some other state has writted the same address, and you were reading it
 						-- there's changes
-						if nread_write(accessor) = '0' then
+						if nread_write(accessor) = '1' then
 							next_state <= s1; -- write
 						else
 							next_state <= s10; -- read
@@ -105,8 +114,8 @@ begin
 					
 					-- update last_addr_written
 					for i in 0 to MEMORY_ACCESSES - 1 loop
-						if enable(i) = '1' and i /= accessor 										-- ha de ser un altre entrada, estar activada...
-								and nread_write(i) = '0' and last_addr(i) = addr(accessor) then		-- ... i llegir de la mateixa adre?a
+						if enable(i) = '1' and i /= accessor 				-- ha de ser un altre entrada, estar activada...
+								and last_addr(i) = addr(accessor) then		-- ... i llegir de la mateixa adreça
 							last_addr_writted(i) <= '1';
 						end if;
 					end loop;
@@ -135,6 +144,7 @@ begin
 					next_state <= s20;
 					
 				when s20 =>
+					first_check(accessor) <= '0';
 					last_addr_writted(accessor) <= '0';
 					last_nread_write(accessor) <= nread_write(accessor);
 					last_addr(accessor) <= addr(accessor);
@@ -148,9 +158,11 @@ begin
 				
 				when s22 =>
 					-- check the next access
-					u_accessor <= u_accessor+1;
-					if to_integer(u_accessor) = MEMORY_ACCESSES then
-						u_accessor <= (others => '0'); -- last one => start again
+					next_u_accessor := u_accessor+1;
+					if to_integer(next_u_accessor) = MEMORY_ACCESSES then
+						u_accessor <= to_unsigned(0, ACESSOR_BUS); -- last one => start again
+					else
+						u_accessor <= next_u_accessor;
 					end if;
 					
 					next_state <= s0;
