@@ -180,8 +180,8 @@ begin
 		wait for 1ns;
 		enable(1) <= '1';
 		
-		wait until done(0) = '0';
 		wait until done(1) = '0';
+		wait until done(0) = '0';
 		wait until done = "11";
 		assert ((response(1) = "00") and (response(0) = "00") and (read_data(0) = x"FF000000"))
 			report "test failed for test 04 [write & read]" severity error;
