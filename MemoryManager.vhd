@@ -30,6 +30,7 @@ entity memory_manager is
 		r_resp			: in std_logic_vector(1 downto 0);
 		
 		-- pins acces memoria
+		enable			: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 		nread_write		: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
 		addr			: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
 		write_data		: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
@@ -49,7 +50,8 @@ architecture behavioral of memory_manager is
 	
 	constant ACESSOR_BUS 		: integer := integer(ceil(log2(real(MEMORY_ACCESSES))));
 	signal state, next_state 	: MEMORY_MANAGER_STATE_MACHINE := s0;
-	signal accessor				: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	signal u_accessor			: unsigned(ACESSOR_BUS - 1 downto 0) := to_unsigned(0, ACESSOR_BUS);
+	signal accessor				: integer;
 	
 	-- variables to check if we need to recheck the RAM
 	signal last_addr_writted	: std_logic_vector(MEMORY_ACCESSES - 1 downto 0) := (others => '1');
@@ -57,19 +59,22 @@ architecture behavioral of memory_manager is
 	signal last_addr			: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
 	signal last_write_data		: bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
 begin
-	process (clk) -- TODO
+	accessor <= to_integer(u_accessor);
+	
+	process (clk) -- TODO clk only?
 	begin
 		case state is
 				when s0 =>
-					if nread_write(accessor) /= last_nread_write(accessor)
+					if enable(accessor) = '1'
+						and (nread_write(accessor) /= last_nread_write(accessor)
 						or addr(accessor) /= last_addr(accessor)
 						or write_data(accessor) /= last_write_data(accessor)
-						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1') then -- some other state has writted the same address, and you were reading it
+						or (nread_write(accessor) = '0' and last_addr_writted(accessor) = '1')) then -- some other state has writted the same address, and you were reading it
 						-- there's changes
 						if nread_write(accessor) = '0' then
-							next_state <= s1; -- read
+							next_state <= s1; -- write
 						else
-							next_state <= s10; -- write
+							next_state <= s10; -- read
 						end if;
 					else
 						next_state <= s22; -- the value that you'll get it's the same; skip
@@ -99,7 +104,12 @@ begin
 					last_write_data(accessor) <= write_data(accessor);
 					
 					-- update last_addr_written
-					-- TODO
+					for i in 0 to MEMORY_ACCESSES - 1 loop
+						if enable(i) = '1' and i /= accessor 										-- ha de ser un altre entrada, estar activada...
+								and nread_write(i) = '0' and last_addr(i) = addr(accessor) then		-- ... i llegir de la mateixa adre?a
+							last_addr_writted(i) <= '1';
+						end if;
+					end loop;
 					
 					next_state <= s20;
 					
@@ -132,15 +142,15 @@ begin
 					next_state <= s21;
 				
 				when s21 =>
-					done <= '1';
+					done(accessor) <= '1';
 					
 					next_state <= s22;
 				
 				when s22 =>
 					-- check the next access
-					accessor <= accessor+1;
-					if accessor >= MEMORY_ACCESSES then
-						accessor <= (others <= '0'); -- last one => start again
+					u_accessor <= u_accessor+1;
+					if to_integer(u_accessor) = MEMORY_ACCESSES then
+						u_accessor <= (others => '0'); -- last one => start again
 					end if;
 					
 					next_state <= s0;

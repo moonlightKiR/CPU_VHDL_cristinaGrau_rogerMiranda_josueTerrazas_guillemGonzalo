@@ -6246,17 +6246,17 @@
 										"$ref": "AAAAAAGAR08sbYKDZIk="
 									},
 									"font": "Arial;13;0",
-									"left": 377,
-									"top": 221,
-									"width": 105.5107421875,
+									"left": 320,
+									"top": 215,
+									"width": 173.46240234375,
 									"height": 13,
-									"alpha": 1.5707963267948966,
-									"distance": 15,
+									"alpha": -4.040467580476871,
+									"distance": 33.60059523282288,
 									"hostEdge": {
 										"$ref": "AAAAAAGAR08sboKEAdk="
 									},
 									"edgePosition": 1,
-									"text": "changes and write"
+									"text": "changes and enable and write"
 								},
 								{
 									"_type": "EdgeLabelView",
@@ -6342,16 +6342,16 @@
 									},
 									"font": "Arial;13;0",
 									"left": 327,
-									"top": 402,
-									"width": 52.76171875,
+									"top": 400,
+									"width": 114.1943359375,
 									"height": 13,
-									"alpha": 0.39479102108045544,
-									"distance": 39,
+									"alpha": 0.2484873850776672,
+									"distance": 69.12307863514182,
 									"hostEdge": {
 										"$ref": "AAAAAAGAR09myYKZ+UA="
 									},
 									"edgePosition": 1,
-									"text": "!changes"
+									"text": "!changes or !enable"
 								},
 								{
 									"_type": "EdgeLabelView",
@@ -6656,9 +6656,9 @@
 										"$ref": "AAAAAAGAR1+fU4LoiKU="
 									},
 									"font": "Arial;13;0",
-									"left": 398,
+									"left": 364,
 									"top": 271,
-									"width": 104.08251953125,
+									"width": 172.0341796875,
 									"height": 13,
 									"alpha": 1.5707963267948966,
 									"distance": 15,
@@ -6666,7 +6666,7 @@
 										"$ref": "AAAAAAGAR1+fU4LpcjI="
 									},
 									"edgePosition": 1,
-									"text": "changes and read"
+									"text": "changes and enable and read"
 								},
 								{
 									"_type": "EdgeLabelView",
@@ -9642,7 +9642,7 @@
 									"_parent": {
 										"$ref": "AAAAAAGAR08sbYKDZIk="
 									},
-									"name": "changes and write"
+									"name": "changes and enable and write"
 								}
 							]
 						},
@@ -9665,7 +9665,7 @@
 									"_parent": {
 										"$ref": "AAAAAAGAR09myYKYWvc="
 									},
-									"name": "!changes"
+									"name": "!changes or !enable"
 								}
 							]
 						},
@@ -9688,7 +9688,7 @@
 									"_parent": {
 										"$ref": "AAAAAAGAR1+fU4LoiKU="
 									},
-									"name": "changes and read"
+									"name": "changes and enable and read"
 								}
 							]
 						},
