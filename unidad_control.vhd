@@ -6,12 +6,12 @@ entity unidad_control is
   
   generic (
     PROGRAM_COUNTER_BITS : integer := 32;
-    INSTRUCTION_REGISTER_BITS : integer : 32;
+    INSTRUCTION_REGISTER_BITS : integer := 32;
     OPCODE_BITS : integer := 4;
     RD_BITS : integer := 6;
     RS_BITS : integer := 6;
     RT_BITS : integer := 6;
-    CONSTANT_BITS := 8
+    CONSTANT_BITS : integer := 8
   );
   
   port(
@@ -96,17 +96,17 @@ begin
     begin
         case (current_state) is
             when STATE0 =>
-                nread_write = '0';
+                nread_write <= '0';
 
             when STATE1 =>
                 opcode <= inst_reg(31 downto 28);
                 rd <= inst_reg(23 downto 18);
-                if (opcode = "1100") then
+                if (inst_reg(31 downto 28) = "1100") then
                     --R
-                elsif (opcode = "0110" OR opcode = "0111" OR opcode = "1000") then
+                elsif ((inst_reg(31 downto 28) = "0110" OR inst_reg(31 downto 28) = "0111") OR inst_reg(31 downto 28) = "1000") then
                     --RR
                     rs <= inst_reg(11 downto 6);
-                elsif (opcode = "0001") then
+                elsif (inst_reg(31 downto 28) = "0001") then
                     --RRImm
                     rs <= inst_reg(17 downto 12);
                     const <= inst_reg(7 downto 0);
@@ -120,9 +120,9 @@ begin
             when STATE3 =>
                 pc_out <= pc_in;
             when STATE4 =>
-                nread_write = '0';
+                nread_write <= '0';
             when STATE5 =>
-            
+
             when others =>
                 
             end case;
