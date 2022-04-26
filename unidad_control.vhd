@@ -20,7 +20,7 @@ entity unidad_control is
     done_mux  : in std_logic;
     pc_in     : in std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
     inst_reg  : in std_logic_vector (INSTRUCTION_REGISTER_BITS - 1 downto 0);
-    pc_out    : out std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
+    pc_out    : out std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0) := "00000000000000000000000000000000";
     nread_write : out std_logic;
     --pins alu
     done_alu  : in std_logic;
@@ -33,6 +33,7 @@ entity unidad_control is
     clock     : in std_logic;
     reset     : in std_logic
   );
+
 end entity;
 
 architecture behavioral of unidad_control is
