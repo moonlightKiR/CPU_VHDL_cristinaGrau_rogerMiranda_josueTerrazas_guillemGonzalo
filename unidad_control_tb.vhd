@@ -3,12 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity unidad_control_tb is
-end;
-
-architecture bench of unidad_control_tb is
-
-component unidad_control is
-  
     generic (
         PROGRAM_COUNTER_BITS : integer := 32;
         INSTRUCTION_REGISTER_BITS : integer := 32;
@@ -18,6 +12,13 @@ component unidad_control is
         RT_BITS : integer := 6;
         CONSTANT_BITS : integer := 8
     );
+end;
+
+architecture bench of unidad_control_tb is
+
+component unidad_control is
+  
+    
     
     port(
         --pins mux
@@ -91,16 +92,17 @@ begin
         reset <= '1';
         done_mux <= '0';
         done_alu <= '0';
-        inst <= "0000111111000000101010110011";
+        inst_reg <= "00000000111111000000101010110011";
         wait for 15 ns;
+        reset <= '0';
         done_mux <= '1';
         wait for 30 ns;
 
         wait for 30 ns;
         done_alu <= '1';
-        wait for 30 ns;
         pc_in <= "00000000000000001000000000000000";
-        done_mux <= '1'
+        wait for 30 ns;
+        done_mux <= '1';
         wait for 30 ns;
         nread_write <= '0';
         wait for 30 ns;
@@ -110,10 +112,10 @@ begin
         wait for 30 ns;
         done_mux <= '1';
         wait for 30 ns;
-        inst <= "00100000111111000000101010110011";
+        inst_reg <= "00100000111111000000101010110011";
         done_mux <= '0';
         wait for 30 ns;
-
+        done_mux <= '1';
         wait;    
     end process;
 end bench;

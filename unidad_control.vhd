@@ -33,7 +33,6 @@ entity unidad_control is
     clock     : in std_logic;
     reset     : in std_logic
   );
-
 end entity;
 
 architecture behavioral of unidad_control is
