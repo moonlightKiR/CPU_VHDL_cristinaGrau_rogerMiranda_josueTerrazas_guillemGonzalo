@@ -32,27 +32,34 @@ entity deco_to_alu is
 		result 			: in std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 		
 		-- pins banc de registres
-		reg_valueOut 		: in std_logic_vector(REGISTER_DATA_BUS - 1 downto 0); -- POV register
+		reg_valueOut 	: in std_logic_vector(REGISTER_DATA_BUS - 1 downto 0); -- POV register
 		
-		reg_valueIn			: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0); -- POV register
-		reg_address 		: out std_logic_vector(3 downto 0);
-		reg_nread_write 	: out std_logic
+		reg_valueIn		: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0); -- POV register
+		reg_address 	: out std_logic_vector(3 downto 0);
+		reg_nread_write : out std_logic;
 		
 		-- pins memoria
-		-- TODO
+		mem_enable		: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
+		mem_nread_write	: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
+		mem_addr		: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
+		mem_write_data	: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
+		mem_read_data	: out bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
+		mem_response	: out bus_array(MEMORY_ACCESSES - 1 downto 0)(1 downto 0);
+		mem_done		: out std_logic_vector(MEMORY_ACCESSES - 1 downto 0)
 	);
 end entity;
 
 architecture behavioral of deco_to_alu is
 	TYPE DECO_TO_ALU_STATE_MACHINE IS (
-		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25
+		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25, e26, e30
 	);
 	
-	signal is_jump : boolean;
+	signal is_jump, load : boolean;
 	signal state, next_state : DECO_TO_ALU_STATE_MACHINE := e0;
 	signal internal_rs : std_logic_vector(REGISTER_SELECT_BUS - 1 downto 0); -- en store rd pasa a ser rs
 begin
 	is_jump <= (opcode = "1100") or (opcode = "1101");
+	load <= (opcode = "0111");
 	
 	-- Alu inputs
 	opcode_o <= opcode;
@@ -64,6 +71,8 @@ begin
 		if not state'event then
 			-- input changed => start again
 			done <= '0';
+			mem_nread_write <= '0';
+			mem_enable <= '1';
 			reg_nread_write <= '0';
 			internal_rs <= rs; -- per defecte a rs
 			
@@ -76,8 +85,8 @@ begin
 				when "0001" =>
 					next_state <= e5;
 				
-				-- Not/R
-				when "0110" =>
+				-- Not/R/Load
+				when "0110" | "0111" =>
 					next_state <= e10;
 				when "1100" =>
 					-- Jump
@@ -85,12 +94,10 @@ begin
 					next_state <= e10;
 				
 				--RR
-				when "0111" =>
-					next_state <= e25;
 				when "1000" =>
 					-- Store
-					internal_rs <= rd;
-					next_state <= e25;
+					internal_rs <= rd; -- TODO sure?
+					next_state <= e30;
 					
 				when others =>
 					next_state <= e0;
@@ -123,7 +130,11 @@ begin
 					oper_1 <= reg_valueOut;
 					oper <= '0';
 					
-					next_state <= e12;
+					if load then
+						next_state <= e25;
+					else
+						next_state <= e12;
+					end if;
 					
 				when e12 =>
 					oper <= '1';
@@ -155,6 +166,27 @@ begin
 				when e20 =>
 					done <= '1';
 					oper <= '0';
+					
+				when e25 =>
+					mem_nread_write <= '0';
+					mem_addr <= reg_valueOut;
+					reg_address <= internal_rs;
+					reg_nread_write <= '0';
+					
+					if mem_done = '0' then
+						next_state <= e26;
+					end if;
+					
+				when e26 =>
+					mem_nread_write <= '0';
+					mem_addr <= reg_valueOut;
+					reg_address <= internal_rs;
+					reg_nread_write <= '0';
+					oper_1 <= mem_read_data; -- the ALU will take the last value
+					
+					if mem_done = '1' then
+						next_state <= e12;
+					end if;
 				
 				when others => -- ?
 			end case;
