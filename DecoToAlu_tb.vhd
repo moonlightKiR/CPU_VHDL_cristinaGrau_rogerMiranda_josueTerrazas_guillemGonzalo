@@ -7,7 +7,9 @@ entity deco_to_alu_tb is
 		REGISTER_DATA_BUS		: integer := 16; -- bits dels operands & resultat
 		PROGRAM_COUNTER_BUS		: integer := 32; -- bits del PC
 		REGISTER_SELECT_BUS		: integer := 6;  -- bits per seleccionar el registre
-		CONSTANT_BUS			: integer := 8   -- bits de la constant; ha de ser <= REGISTER_DATA_BUS
+		CONSTANT_BUS			: integer := 8;  -- bits de la constant; ha de ser <= REGISTER_DATA_BUS
+		RAM_ADDRESS_BUS			: integer := 32;
+		RAM_DATA_BUS			: integer := 32
 	);
 end entity;
 
@@ -17,7 +19,9 @@ architecture behavioral of deco_to_alu_tb is
 			REGISTER_DATA_BUS		: integer := REGISTER_DATA_BUS;
 			PROGRAM_COUNTER_BUS		: integer := PROGRAM_COUNTER_BUS;
 			REGISTER_SELECT_BUS		: integer := REGISTER_SELECT_BUS;
-			CONSTANT_BUS			: integer := CONSTANT_BUS
+			CONSTANT_BUS			: integer := CONSTANT_BUS;
+			RAM_ADDRESS_BUS			: integer := RAM_ADDRESS_BUS;
+			RAM_DATA_BUS			: integer := RAM_DATA_BUS
 		);
 		port (
 			-- pins bloc
@@ -46,10 +50,16 @@ architecture behavioral of deco_to_alu_tb is
 			
 			reg_valueIn			: out std_logic_vector(REGISTER_DATA_BUS - 1 downto 0); -- POV register
 			reg_address 		: out std_logic_vector(3 downto 0);
-			reg_nread_write 	: out std_logic
+			reg_nread_write 	: out std_logic;
 			
 			-- pins memoria
-			-- TODO
+			mem_enable		: out std_logic;
+			mem_nread_write	: out std_logic;
+			mem_addr		: out std_logic_vector(RAM_ADDRESS_BUS - 1 downto 0);
+			mem_write_data	: out std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+			mem_read_data	: in std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+			mem_response	: in std_logic_vector(1 downto 0);
+			mem_done		: in std_logic
 		);
 	end component;
 	
@@ -92,6 +102,10 @@ architecture behavioral of deco_to_alu_tb is
 	signal reg_valueOut, reg_valueIn : std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 	signal reg_address : std_logic_vector(3 downto 0);
 	signal reg_nread_write, reset : std_logic;
+	signal mem_enable, mem_nread_write, mem_done : std_logic;
+	signal mem_addr : std_logic_vector(RAM_ADDRESS_BUS - 1 downto 0);
+	signal mem_write_data, mem_read_data : std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+	signal mem_response	: std_logic_vector(1 downto 0);
 begin
 	clk <= not clk after CLK_PERIOD/2;
 	
@@ -138,7 +152,14 @@ begin
 			reg_valueOut => reg_valueOut,
 			reg_valueIn => reg_valueIn,
 			reg_address => reg_address,
-			reg_nread_write => reg_nread_write
+			reg_nread_write => reg_nread_write,
+			mem_enable => mem_enable,
+			mem_nread_write => mem_nread_write,
+			mem_addr => mem_addr,
+			mem_write_data => mem_write_data,
+			mem_read_data => mem_read_data,
+			mem_response => mem_response,
+			mem_done => mem_done
 		);
 	
 	stim_p : process
