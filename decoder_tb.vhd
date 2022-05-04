@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity unidad_control_tb is
+entity decoder_tb is
     generic (
         PROGRAM_COUNTER_BITS : integer := 32;
         INSTRUCTION_REGISTER_BITS : integer := 32;
@@ -14,19 +14,19 @@ entity unidad_control_tb is
     );
 end;
 
-architecture bench of unidad_control_tb is
+architecture bench of decoder_tb is
 
-component unidad_control is
+component decoder is
   
     
     
     port(
         --pins mux
         done_mux  : in std_logic;
+		addr_mux  : out std_logic_vector(PROGRAM_COUNTER_BITS - 1 downto 0);
         pc_in     : in std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
         inst_reg  : in std_logic_vector (INSTRUCTION_REGISTER_BITS - 1 downto 0);
         pc_out    : out std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
-        nread_write : out std_logic;
         --pins alu
         done_alu  : in std_logic;
         opcode    : out std_logic_vector (OPCODE_BITS - 1 downto 0);
@@ -42,10 +42,10 @@ end component;
 
     -- Ports
     signal done_mux  :  std_logic;
+	signal addr_mux  :  std_logic_vector(PROGRAM_COUNTER_BITS - 1 downto 0);
     signal pc_in     :  std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
     signal inst_reg  :  std_logic_vector (INSTRUCTION_REGISTER_BITS - 1 downto 0);
     signal pc_out    :  std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
-    signal nread_write :  std_logic;
    
     signal done_alu  :  std_logic;
     signal opcode    :  std_logic_vector (OPCODE_BITS - 1 downto 0);
@@ -59,13 +59,13 @@ end component;
 
 begin
 
-    UUT : unidad_control
+    UUT : decoder
         port map (
-            done_mux  => done_mux, 
+            done_mux  => done_mux,
+			addr_mux => addr_mux,
             pc_in     => pc_in,
             inst_reg  => inst_reg,
             pc_out    => pc_out,
-            nread_write  => nread_write,
             done_alu  => done_alu,
             opcode  => opcode,
             rd  => rd,
@@ -103,8 +103,6 @@ begin
         pc_in <= "00000000000000001000000000000000";
         wait for 30 ns;
         done_mux <= '1';
-        wait for 30 ns;
-        nread_write <= '0';
         wait for 30 ns;
         done_mux <= '0';
         wait for 30 ns;
