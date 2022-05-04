@@ -7,7 +7,10 @@ entity deco_to_alu is
 		REGISTER_DATA_BUS		: integer := 16; -- bits dels operands & resultat
 		PROGRAM_COUNTER_BUS		: integer := 32; -- bits del PC
 		REGISTER_SELECT_BUS		: integer := 6;  -- bits per seleccionar el registre
-		CONSTANT_BUS			: integer := 8   -- bits de la constant; ha de ser <= REGISTER_DATA_BUS
+		CONSTANT_BUS			: integer := 8;  -- bits de la constant; ha de ser <= REGISTER_DATA_BUS
+		
+		RAM_ADDRESS_BUS			: integer := 32;
+		RAM_DATA_BUS			: integer := 32
 	);
 	port (
 		-- pins bloc
@@ -39,27 +42,28 @@ entity deco_to_alu is
 		reg_nread_write : out std_logic;
 		
 		-- pins memoria
-		mem_enable		: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
-		mem_nread_write	: in std_logic_vector(MEMORY_ACCESSES - 1 downto 0);
-		mem_addr		: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_ADDRESS_BUS - 1 downto 0);
-		mem_write_data	: in bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
-		mem_read_data	: out bus_array(MEMORY_ACCESSES - 1 downto 0)(RAM_DATA_BUS - 1 downto 0);
-		mem_response	: out bus_array(MEMORY_ACCESSES - 1 downto 0)(1 downto 0);
-		mem_done		: out std_logic_vector(MEMORY_ACCESSES - 1 downto 0)
+		mem_enable		: out std_logic;
+		mem_nread_write	: out std_logic;
+		mem_addr		: out std_logic_vector(RAM_ADDRESS_BUS - 1 downto 0);
+		mem_write_data	: out std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+		mem_read_data	: in std_logic_vector(RAM_DATA_BUS - 1 downto 0);
+		mem_response	: in std_logic_vector(1 downto 0);
+		mem_done		: in std_logic
 	);
 end entity;
 
 architecture behavioral of deco_to_alu is
 	TYPE DECO_TO_ALU_STATE_MACHINE IS (
-		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25, e26, e30
+		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25, e26, e30, e31, e32, e33, e34
 	);
 	
-	signal is_jump, load : boolean;
+	signal is_jump, load, store : boolean;
 	signal state, next_state : DECO_TO_ALU_STATE_MACHINE := e0;
 	signal internal_rs : std_logic_vector(REGISTER_SELECT_BUS - 1 downto 0); -- en store rd pasa a ser rs
 begin
 	is_jump <= (opcode = "1100") or (opcode = "1101");
 	load <= (opcode = "0111");
+	store <= (opcode = "1000");
 	
 	-- Alu inputs
 	opcode_o <= opcode;
@@ -85,19 +89,13 @@ begin
 				when "0001" =>
 					next_state <= e5;
 				
-				-- Not/R/Load
+				-- RR (Not/Load/Store)/R
 				when "0110" | "0111" =>
 					next_state <= e10;
-				when "1100" =>
-					-- Jump
+				when "1100" | "1000" =>
+					-- Jump/Store
 					internal_rs <= rd;
 					next_state <= e10;
-				
-				--RR
-				when "1000" =>
-					-- Store
-					internal_rs <= rd; -- TODO sure?
-					next_state <= e30;
 					
 				when others =>
 					next_state <= e0;
@@ -132,6 +130,8 @@ begin
 					
 					if load then
 						next_state <= e25;
+					elsif store then
+						next_state <= e30;
 					else
 						next_state <= e12;
 					end if;
@@ -183,10 +183,46 @@ begin
 					reg_address <= internal_rs;
 					reg_nread_write <= '0';
 					oper_1 <= mem_read_data; -- the ALU will take the last value
+					oper <= '0';
 					
 					if mem_done = '1' then
 						next_state <= e12;
 					end if;
+				
+				when e30 =>
+					mem_addr <= reg_valueOut;
+					reg_address <= internal_rs;
+					reg_nread_write <= '0';
+					oper_1 <= rs;
+					oper <= '0';
+					
+					next_state <= e31;
+					
+				when e31 =>
+					oper <= '1';
+					
+					next_state <= e32;
+					
+				when e32 =>
+					mem_nread_write <= '1';
+					mem_write_data <= result;
+					
+					if mem_done = '0' then
+						next_state <= e33;
+					end if;
+					
+				when e33 =>
+					mem_nread_write <= '1';
+					mem_write_data <= result;
+					
+					if mem_done = '1' then
+						next_state <= e34;
+					end if;
+					
+				when e34 =>
+					mem_nread_write <= '0';
+					
+					next_state <= e20;
 				
 				when others => -- ?
 			end case;
