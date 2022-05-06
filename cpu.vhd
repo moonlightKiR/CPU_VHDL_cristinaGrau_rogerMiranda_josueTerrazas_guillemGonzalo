@@ -117,8 +117,10 @@ architecture behavioral of cpu is
 	signal reg_valueOut 			: std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 	signal reg_valueIn				: std_logic_vector(REGISTER_DATA_BUS - 1 downto 0);
 	signal reg_address 				: std_logic_vector(3 downto 0);
-	signal reg_nread_write 			: std_logic;
+	signal reg_nread_write, reg_rst : std_logic;
 begin
+	reg_rst <= not reset; -- el reset del registre va per lògica negada
+	
 	uc_inst : unidad_control
 		port map (
 			clk => clk,
@@ -169,7 +171,7 @@ begin
 	reg_inst : BitsRegistro
 		port map (
 			clock => clk,
-			reset => reset,
+			reset => reg_rst,
 			
 			valueOut => reg_valueOut,
 			valueIn => reg_valueIn,
