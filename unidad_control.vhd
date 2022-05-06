@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity unidad_control is
 	generic (
-		REGISTER_DATA_BUS	: integer := 6;
+		REGISTER_DATA_BUS	: integer := 16;
 		RAM_ADDRESS_BUS		: integer := 32;
 		
 		PROGRAM_COUNTER_BUS : integer := 32;
