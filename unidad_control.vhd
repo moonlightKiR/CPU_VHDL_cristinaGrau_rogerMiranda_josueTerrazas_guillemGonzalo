@@ -116,7 +116,7 @@ architecture behavioral of unidad_control is
 		);
 	end component;
 	
-	signal pc_in, pc_out			: std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0);
+	signal pc_in, pc_out			: std_logic_vector(PROGRAM_COUNTER_BUS - 1 downto 0); -- POV decoder
 	signal done_alu					: std_logic;
 	signal opcode					: std_logic_vector(3 downto 0);
 	signal rd, rs, rt 				: std_logic_vector(REGISTER_SELECT_BUS - 1 downto 0);
@@ -151,8 +151,8 @@ begin
 			clk => clk,
 			
 			-- conexion decoder
-			pc_in => pc_in,
-			pc_out => pc_out,
+			pc_in => pc_out,
+			pc_out => pc_in,
 			done => done_alu,
 			opcode => opcode,
 			rd => rd,

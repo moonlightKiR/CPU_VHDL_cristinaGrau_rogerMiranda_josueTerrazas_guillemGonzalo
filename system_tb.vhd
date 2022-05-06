@@ -91,7 +91,7 @@ begin
 		wait for 1ns;
 		memory_nread_write <= '1';
 		
-		wait until memory_done = '0';
+		--wait until memory_done = '0';
 		wait until memory_done = '1';
 		memory_nread_write <= '0';
 		

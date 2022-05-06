@@ -21,7 +21,7 @@ entity decoder is
 	addr_mux  : out std_logic_vector(PROGRAM_COUNTER_BITS - 1 downto 0);
     pc_in     : in std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
     inst_reg  : in std_logic_vector (INSTRUCTION_REGISTER_BITS - 1 downto 0);
-    pc_out    : out std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0) := "00000000000000000000000000000000";
+    pc_out    : out std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
     --pins alu
     done_alu  : in std_logic;
     opcode    : out std_logic_vector (OPCODE_BITS - 1 downto 0);
@@ -44,17 +44,17 @@ architecture behavioral of decoder is
                         STATE5);
 
     signal current_state, next_state : state_type;
-
+	signal pc : std_logic_vector (PROGRAM_COUNTER_BITS - 1 downto 0);
 begin
-	addr_mux <= pc_in;
+	pc_out <= pc;
+	addr_mux <= pc;
 	
     state_p : process (clock, reset)
         begin
             if (reset = '1') then
-            current_state <= STATE0;
-			pc_in <= (others => '0');
+				current_state <= STATE0;
             elsif (clock'event and clock = '1') then
-            current_state <= next_state;
+				current_state <= next_state;
             end if;
         end process;
         
@@ -98,6 +98,7 @@ begin
     begin
         case (current_state) is
             when STATE0 =>
+				pc <= (others => '0');
 
             when STATE1 =>
                 opcode <= inst_reg(31 downto 28);
@@ -119,7 +120,7 @@ begin
             when STATE2 =>
                   
             when STATE3 =>
-                pc_out <= pc_in;
+                pc <= pc_in;
 				
             when STATE4 =>
 			

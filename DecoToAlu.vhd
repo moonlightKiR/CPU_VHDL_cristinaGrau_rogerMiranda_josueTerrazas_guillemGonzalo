@@ -54,7 +54,7 @@ end entity;
 
 architecture behavioral of deco_to_alu is
 	TYPE DECO_TO_ALU_STATE_MACHINE IS (
-		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25, e26, e30, e31, e32, e33, e34
+		e0, e1, e2, e5, e10, e11, e12, e15, e16, e17, e20, e25, e26, e30, e31, e32, e33, e34, e35, e36
 	);
 	
 	signal is_jump, load, store : boolean;
@@ -169,8 +169,8 @@ begin
 					
 				when e25 =>
 					mem_nread_write <= '0';
-					mem_addr <= reg_valueOut;
-					reg_address <= internal_rs;
+					mem_addr <= x"0000" & reg_valueOut;
+					reg_address <= internal_rs(3 downto 0);
 					reg_nread_write <= '0';
 					
 					if mem_done = '0' then
@@ -179,8 +179,8 @@ begin
 					
 				when e26 =>
 					mem_nread_write <= '0';
-					mem_addr <= reg_valueOut;
-					reg_address <= internal_rs;
+					mem_addr <= x"0000" & reg_valueOut;
+					reg_address <= internal_rs(3 downto 0);
 					reg_nread_write <= '0';
 					oper_1 <= mem_read_data; -- the ALU will take the last value
 					oper <= '0';
@@ -190,36 +190,48 @@ begin
 					end if;
 				
 				when e30 =>
-					mem_addr <= reg_valueOut;
-					reg_address <= internal_rs;
+					mem_addr <= x"0000" & reg_valueOut;
+					reg_address <= internal_rs(3 downto 0);
 					reg_nread_write <= '0';
-					oper_1 <= rs;
-					oper <= '0';
 					
 					next_state <= e31;
-					
+				
 				when e31 =>
-					oper <= '1';
+					reg_nread_write <= '0';
+					reg_address <= rs(3 downto 0);
 					
 					next_state <= e32;
-					
+				
 				when e32 =>
-					mem_nread_write <= '1';
-					mem_write_data <= result;
+					reg_nread_write <= '0';
+					reg_address <= rs(3 downto 0);
+					oper_1 <= reg_valueOut;
+					oper <= '0';
 					
-					if mem_done = '0' then
-						next_state <= e33;
-					end if;
+					next_state <= e33;
 					
 				when e33 =>
-					mem_nread_write <= '1';
-					mem_write_data <= result;
+					oper <= '1';
 					
-					if mem_done = '1' then
-						next_state <= e34;
-					end if;
+					next_state <= e34;
 					
 				when e34 =>
+					mem_nread_write <= '1';
+					mem_write_data <= x"0000" & result;
+					
+					if mem_done = '0' then
+						next_state <= e35;
+					end if;
+					
+				when e35 =>
+					mem_nread_write <= '1';
+					mem_write_data <= x"0000" & result;
+					
+					if mem_done = '1' then
+						next_state <= e36;
+					end if;
+					
+				when e36 =>
 					mem_nread_write <= '0';
 					
 					next_state <= e20;
