@@ -16,7 +16,7 @@ entity system is
 		MEMORY_ACCESSES		: integer := 3
 	);
 	port (
-		clk, reset		: in std_logic;
+		clk, cpu_reset, mem_reset : in std_logic;
 		
 		-- RAM multiplexer if you want to write/read to check
 		memory_enable		: in std_logic;
@@ -155,7 +155,7 @@ begin
 	memory_inst : memory
 		port map (
 			clock => clk,
-			reset => reset,
+			reset => mem_reset,
 			
 			WADDR => w_addr,
 			WAVALID => w_addr_valid,
@@ -199,7 +199,7 @@ begin
 	cpu_inst : cpu
 		port map (
 			clk => clk,
-			reset => reset,
+			reset => cpu_reset,
 			
 			mem_enable_decoder => mem_enable(0),
 			mem_nread_write_decoder => mem_nread_write(0),
