@@ -95,6 +95,8 @@ begin
 						done(accessor) <= '0';
 						w_addr <= addr(accessor);
 						w_data <= write_data(accessor);
+						w_addr_valid <= '0';
+						w_data_valid <= '0';
 						
 						next_state <= s2;
 						
@@ -104,7 +106,7 @@ begin
 						w_addr_valid <= '1';
 						w_data_valid <= '1';
 						
-						if w_resp_valid then
+						if w_resp_valid = '1' then
 							next_state <= s3;
 						end if;
 						
@@ -127,6 +129,7 @@ begin
 					when s10 =>
 						done(accessor) <= '0';
 						r_addr <= addr(accessor);
+						r_addr_valid <= '0';
 						
 						next_state <= s11;
 						
@@ -134,7 +137,7 @@ begin
 						r_addr <= addr(accessor);
 						r_addr_valid <= '1';
 						
-						if r_data_valid then
+						if r_data_valid = '1' then
 							next_state <= s12;
 						end if;
 						
