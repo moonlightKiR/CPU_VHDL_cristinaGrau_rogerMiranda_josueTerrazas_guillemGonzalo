@@ -141,6 +141,29 @@ begin
 		wait until memory_done = '1';
 		memory_nread_write <= '0';
 		
+		-- while(true)
+		wait for 1ns;
+		memory_addr <= x"00000005";
+		memory_write_data <= "0001" & "0000" & "000011" & "000000" & "0000" & "00000110"; -- addi 3, 0, 8 (carrega al registre 3 el valor 0+6)
+		
+		wait for 1ns;
+		memory_nread_write <= '1';
+		
+		wait until memory_done = '0';
+		wait until memory_done = '1';
+		memory_nread_write <= '0';
+		
+		wait for 1ns;
+		memory_addr <= x"00000006";
+		memory_write_data <= "1100" & "0000" & "000011" & "000000000000000000"; -- jp 3 -- PC = 6
+		
+		wait for 1ns;
+		memory_nread_write <= '1';
+		
+		wait until memory_done = '0';
+		wait until memory_done = '1';
+		memory_nread_write <= '0';
+		
 		-- end of writting; start simulation
 		cpu_reset <= '0';
 		

@@ -64,10 +64,12 @@ begin
 				when "1011" =>
 					result_unsigned := shift_right(oper_1_unsigned, to_integer(oper_2_unsigned)); -- >>
 				when "1100" =>
-					pc_out_unsigned := oper_1_unsigned;						-- jump
+					pc_out_unsigned := (others => '0');
+					pc_out_unsigned(REGISTER_DATA_BUS - 1 downto 0) := oper_1_unsigned;			-- jump
 				when "1101" =>
 					if oper_2_unsigned = zero then
-						pc_out_unsigned := oper_1_unsigned;					-- conditional jump
+						pc_out_unsigned := (others => '0');
+						pc_out_unsigned(REGISTER_DATA_BUS - 1 downto 0) := oper_1_unsigned;		-- conditional jump
 					end if;
 				when others =>
 			end case;
