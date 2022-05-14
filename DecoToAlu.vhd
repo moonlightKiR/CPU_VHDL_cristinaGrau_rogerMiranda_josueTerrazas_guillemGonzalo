@@ -70,9 +70,10 @@ begin
 	alu_pc_in <= pc_in;
 	pc_out <= alu_pc_out;
 	process (state,						-- next state
-			opcode, rd, rs, rt, const) 	-- reset state machine variables
+			opcode, rd, rs, rt, const,	-- reset state machine variables
+			mem_done) 					-- conditional state avance
 	begin
-		if not state'event then
+		if (not state'event) and (not mem_done'event) then
 			-- input changed => start again
 			done <= '0';
 			mem_nread_write <= '0';
@@ -182,7 +183,7 @@ begin
 					mem_addr <= x"0000" & reg_valueOut;
 					reg_address <= internal_rs(3 downto 0);
 					reg_nread_write <= '0';
-					oper_1 <= mem_read_data; -- the ALU will take the last value
+					oper_1 <= mem_read_data(REGISTER_DATA_BUS - 1 downto 0); -- the ALU will take the last value
 					oper <= '0';
 					
 					if mem_done = '1' then

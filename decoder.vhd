@@ -97,10 +97,10 @@ begin
     output_logic : process (done_alu, done_mux, current_state, inst_reg)
     begin
         case (current_state) is
-            when STATE0 =>
+            when STATE0 => -- first-time configuration
 				pc <= (others => '0');
 
-            when STATE1 =>
+            when STATE1 => -- decode what you've read
                 opcode <= inst_reg(31 downto 28);
                 rd <= inst_reg(23 downto 18);
                 if (inst_reg(31 downto 28) = "1100") then
@@ -117,14 +117,15 @@ begin
                     rs <= inst_reg(11 downto 6);
                     rt <= inst_reg(5 downto 0);
                 end if;    
-            when STATE2 =>
+				
+            when STATE2 => -- wait the ALU to finish
                   
-            when STATE3 =>
+            when STATE3 => -- copy the next PC
                 pc <= pc_in;
 				
-            when STATE4 =>
+            when STATE4 => -- read signal not notified yet
 			
-            when STATE5 =>
+            when STATE5 => -- wait for the next instruction
 
             when others =>
                 

@@ -82,11 +82,12 @@ begin
 		cpu_reset <= '1';
 		mem_reset <= '1';
 		
+		-- write code for test 01
 		wait for 1ns;
 		memory_enable <= '1';
 		mem_reset <= '0';
 		memory_addr <= x"00000000";
-		memory_write_data <= "0001" & "0000" & "000001" & "000000" & "0000" & "00000100"; -- addi 1, 0, 4 (carrega al registre 1 el valor 0+4)
+		memory_write_data <= "0001" & "0000" & "000001" & "000000" & "0000" & "00001000"; -- addi 1, 0, 8 (carrega al registre 1 el valor 0+8)
 		
 		wait for 1ns;
 		memory_nread_write <= '1';
@@ -97,7 +98,7 @@ begin
 		
 		wait for 1ns;
 		memory_addr <= x"00000001";
-		memory_write_data <= "1000" & "0000" & "000001" & "000000" & "000001" & "000000"; -- st 1, 1 -- Memory[4] = 4
+		memory_write_data <= "1000" & "0000" & "000001" & "000000" & "000001" & "000000"; -- st 1, 1 -- Memory[8] = 8
 		
 		wait for 1ns;
 		memory_nread_write <= '1';
@@ -105,15 +106,58 @@ begin
 		wait until memory_done = '0';
 		wait until memory_done = '1';
 		memory_nread_write <= '0';
-		cpu_reset <= '0';
+		
+		-- write code for test 02
+		wait for 1ns;
+		memory_addr <= x"00000002";
+		memory_write_data <= "0111" & "0000" & "000010" & "000000" & "000001" & "000000"; -- ld 2, 1 -- (*)2 = Memory[8]
+		
+		wait for 1ns;
+		memory_nread_write <= '1';
+		
+		wait until memory_done = '0';
+		wait until memory_done = '1';
+		memory_nread_write <= '0';
+		
+		wait for 1ns;
+		memory_addr <= x"00000003";
+		memory_write_data <= "1001" & "0000" & "000010" & "000000" & "000010" & "000000"; -- cmp 2, 2, 0 -- (*)2 = 1 (8>0)
+		
+		wait for 1ns;
+		memory_nread_write <= '1';
+		
+		wait until memory_done = '0';
+		wait until memory_done = '1';
+		memory_nread_write <= '0';
 		
 		wait for 1ns;
 		memory_addr <= x"00000004";
+		memory_write_data <= "1000" & "0000" & "000010" & "000000" & "000001" & "000000"; -- st 1, 2 -- Memory[1] = 8
+		
+		wait for 1ns;
+		memory_nread_write <= '1';
 		
 		wait until memory_done = '0';
-		wait until (memory_done = '1' and memory_read_data = x"00000004") for CLK_PERIOD*100;
-		assert (memory_read_data = x"00000004")
+		wait until memory_done = '1';
+		memory_nread_write <= '0';
+		
+		-- end of writting; start simulation
+		cpu_reset <= '0';
+		
+		wait for 1ns;
+		memory_addr <= x"00000008";
+		
+		wait until memory_done = '0';
+		wait until (memory_done = '1' and memory_read_data = x"00000008") for CLK_PERIOD*100;
+		assert (memory_read_data = x"00000008")
 			report "test failed for test 01 [addi+store]" severity error;
+		
+		memory_addr <= x"00000001";
+		
+		wait until memory_done = '0';
+		wait until (memory_done = '1' and memory_read_data = x"00000008") for CLK_PERIOD*200;
+		assert (memory_read_data = x"00000008")
+			report "test failed for test 02 [cpm+load]" severity error;
 		
 		wait;
 	end process;
