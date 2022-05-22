@@ -124,8 +124,6 @@ begin
 							end if;
 						end loop;
 						
-						last_nread_write(accessor) <= '1';
-						
 						-- end?
 						if nread_write(accessor) = '1' then
 							next_state <= s20;
