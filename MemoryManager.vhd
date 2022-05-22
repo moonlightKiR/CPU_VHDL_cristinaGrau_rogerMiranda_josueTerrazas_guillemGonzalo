@@ -124,7 +124,15 @@ begin
 							end if;
 						end loop;
 						
-						next_state <= s20;
+						last_nread_write(accessor) <= '1';
+						
+						-- end?
+						if nread_write(accessor) = '1' then
+							next_state <= s20;
+						else
+							-- changed while processing
+							next_state <= s0;
+						end if;
 						
 					when s10 =>
 						done(accessor) <= '0';
@@ -146,7 +154,13 @@ begin
 						read_data(accessor) <= r_data;
 						r_addr_valid <= '0';
 						
-						next_state <= s20;
+						-- end?
+						if nread_write(accessor) = '0' then
+							next_state <= s20;
+						else
+							-- changed while processing
+							next_state <= s0;
+						end if;
 						
 					when s20 =>
 						first_check(accessor) <= '0';
