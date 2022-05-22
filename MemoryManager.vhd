@@ -65,7 +65,7 @@ begin
 	process (state, clk)
 		variable next_u_accessor : unsigned(ACESSOR_BUS - 1 downto 0);
 	begin
-		if rising_edge(clk) then
+		if state'event or (rising_edge(clk) and (state = ss or state = s2 or state = s11)) then
 			case state is
 					when ss =>
 						u_accessor <= to_unsigned(0, ACESSOR_BUS);
