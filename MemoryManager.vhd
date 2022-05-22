@@ -65,7 +65,7 @@ begin
 	process (state, clk)
 		variable next_u_accessor : unsigned(ACESSOR_BUS - 1 downto 0);
 	begin
-		if rising_edge(clk) then
+		if state'event or (rising_edge(clk) and (state = ss or state = s2 or state = s11)) then
 			case state is
 					when ss =>
 						u_accessor <= to_unsigned(0, ACESSOR_BUS);
@@ -124,7 +124,15 @@ begin
 							end if;
 						end loop;
 						
-						next_state <= s20;
+						last_nread_write(accessor) <= '1';
+						
+						-- end?
+						if nread_write(accessor) = '1' then
+							next_state <= s20;
+						else
+							-- changed while processing
+							next_state <= s0;
+						end if;
 						
 					when s10 =>
 						done(accessor) <= '0';
@@ -146,7 +154,13 @@ begin
 						read_data(accessor) <= r_data;
 						r_addr_valid <= '0';
 						
-						next_state <= s20;
+						-- end?
+						if nread_write(accessor) = '0' then
+							next_state <= s20;
+						else
+							-- changed while processing
+							next_state <= s0;
+						end if;
 						
 					when s20 =>
 						first_check(accessor) <= '0';
